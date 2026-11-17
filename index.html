@@ -1,0 +1,93 @@
+<!doctype html><html lang="ko"><head><meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<title>유비텍 작업일지</title><meta name="theme-color" content="#13202b">
+<link rel="manifest" href="manifest.webmanifest"><link rel="icon" href="icon-192.png">
+<style>
+:root{--bg:#13202b;--card:#1b2a36;--ink:#e8eef3;--muted:#9fb0bf;--go:#3fb68b;--line:#2b3d4c;--warn:#e5a13a}
+*{box-sizing:border-box}body{margin:0;background:var(--bg);color:var(--ink);font:16px/1.55 system-ui,-apple-system,'Malgun Gothic',sans-serif;min-height:100vh;display:flex;align-items:center;justify-content:center;padding:24px 16px}
+.box{width:100%;max-width:440px;text-align:center}.logo{width:84px;height:84px;border-radius:20px}
+h1{font-size:22px;margin:14px 0 6px}p{color:var(--muted);margin:6px 0}
+.btn{display:block;width:100%;padding:15px;margin:12px 0 0;border-radius:12px;border:1px solid var(--line);background:var(--card);color:var(--ink);font-size:17px;font-weight:700;text-decoration:none;cursor:pointer}
+.btn.go{background:var(--go);border-color:var(--go);color:#0d1720}
+.steps{text-align:left;background:var(--card);border:1px solid var(--line);border-radius:12px;padding:12px 16px;margin-top:18px;font-size:15px}
+.steps b{color:var(--ink)}.steps li{margin:6px 0;color:var(--muted)}
+.warn{color:var(--warn)}.bar{height:8px;background:var(--line);border-radius:9px;overflow:hidden;margin:16px 0 4px}.bar i{display:block;height:100%;width:0;background:var(--go);transition:width .3s}
+[hidden]{display:none!important}
+</style></head><body><div class="box">
+<img class="logo" src="icon-192.png" alt="">
+<div id="home">
+  <h1>유비텍 작업일지</h1>
+  <p id="hint">작업일지를 여는 중…</p>
+  <button class="btn go" id="install" hidden>📲 핸드폰에 앱으로 설치</button>
+  <a class="btn" id="open" href="#">작업일지 열기</a>
+  <ol class="steps" id="how" hidden>
+    <li>설치 버튼이 안 보이면: 크롬 메뉴 <b>⋮</b> → <b>앱 설치</b>(또는 <b>홈 화면에 추가</b>)</li>
+    <li>설치하면 홈 화면에 <b>유비텍</b> 아이콘이 생깁니다</li>
+    <li>카톡 캡처를 보다가 <b>공유</b> → <b>유비텍</b>을 누르면 바로 작업일지 등록 화면이 열립니다</li>
+  </ol>
+</div>
+<div id="work" hidden>
+  <h1>카톡 캡처 읽는 중</h1>
+  <p id="msg">잠시만 기다려 주세요 (한 장에 5~10초)</p>
+  <div class="bar"><i id="bar"></i></div>
+  <a class="btn" id="back" href="#" hidden>작업일지 열기</a>
+</div>
+</div>
+<script>
+const EXEC='https://script.google.com/macros/s/AKfycbyn10JgfqknaMjCXn5GvsotmD70eei5LiPlqkTZRFfDF0QHvhJRxpYDMe1GAnrK0Blq/exec';const $=s=>document.querySelector(s);
+const KK_OCR='https://script.google.com/macros/s/AKfycbwIyh8fc8UFFGorjBpWKkf1fHRuRlDY9EkM1oqlEhoQPC6EAtohbijVk3l_bOO_oFHQTg/exec',KK_KEY='B_XVIYl9b6eFe_-XGz53WGfUufnzqSxi';
+async function kkOcr(b64){let r;try{r=await fetch(KK_OCR,{method:'POST',body:JSON.stringify({key:KK_KEY,data:b64,mime:'image/jpeg'})})}catch(e){throw new Error('글자 읽기 서버에 연결하지 못했습니다')}
+  let o;try{o=await r.json()}catch(e){throw new Error('NEED_AUTH 글자 읽기 서버 응답이 올바르지 않습니다')}
+  if(!o.ok)throw new Error(o.error||'글자를 읽지 못했습니다');return o}
+function kkYellow(g,W,h){const d=g.getImageData(0,0,W,h).data;const rows=new Array(h);
+  for(let y=0;y<h;y++){let n=0,a=W,b=-1,o=y*W*4;for(let x=0;x<W;x++,o+=4){const r=d[o],gg=d[o+1],bb=d[o+2];
+      if(r>225&&gg>190&&gg<245&&bb<120&&r-bb>130){n++;if(x<a)a=x;if(x>b)b=x}}rows[y]=n>=12?[a,b]:null}
+  const boxes=[];let cur=null,gap=0;const end=()=>{if(cur&&cur.y1-cur.y0>=18&&cur.x1-cur.x0>=40)boxes.push(cur);cur=null;gap=0};
+  for(let y=0;y<h;y++){const r=rows[y];
+    if(r){if(!cur)cur={y0:y,y1:y,x0:r[0],x1:r[1]};else{cur.y1=y;cur.x0=Math.min(cur.x0,r[0]);cur.x1=Math.max(cur.x1,r[1])}gap=0}
+    else if(cur&&++gap>3)end()}
+  end();return boxes}
+function kkSlices(file){return new Promise((res,rej)=>{const url=URL.createObjectURL(file);const img=new Image();
+  img.onload=()=>{const nw=img.naturalWidth,W=Math.round(nw<900?Math.min(nw*3,1200):Math.min(nw,1440)),sc=W/nw,H=Math.round(img.naturalHeight*sc),step=2400,parts=[];
+    for(let y=0;y<H;y+=step){const h=Math.min(step,H-y);const c=document.createElement('canvas');c.width=W;c.height=h;const g=c.getContext('2d',{willReadFrequently:true});g.fillStyle='#fff';g.fillRect(0,0,W,h);g.drawImage(img,0,-y,W,H);
+      const boxes=kkYellow(g,W,h);let mine=null;
+      if(boxes.length){const P=6,mw=Math.max(...boxes.map(b=>b.x1-b.x0))+2*P+40;const mh=boxes.reduce((t,b)=>t+64+(b.y1-b.y0)+2*P+28,20);
+        const m=document.createElement('canvas');m.width=Math.max(mw,320);m.height=mh;const mg=m.getContext('2d');mg.fillStyle='#fff';mg.fillRect(0,0,m.width,mh);
+        let yy=20;boxes.forEach((b,k)=>{mg.fillStyle='#000';mg.font='bold 34px Arial';mg.fillText('MSG '+(k+1),20,yy+40);yy+=64;
+          const bw=b.x1-b.x0+2*P,bh=b.y1-b.y0+2*P;mg.drawImage(c,Math.max(0,b.x0-P),Math.max(0,b.y0-P),bw,bh,20,yy,bw,bh);yy+=bh+28});
+        mine=m.toDataURL('image/jpeg',0.9).split(',')[1];
+        g.fillStyle='#fff';boxes.forEach(b=>g.fillRect(Math.max(0,b.x0-8),Math.max(0,b.y0-8),b.x1-b.x0+16,b.y1-b.y0+16))}
+      parts.push({o:c.toDataURL('image/jpeg',0.88).split(',')[1],m:mine,n:boxes.length})}
+    URL.revokeObjectURL(url);res(parts)};
+  img.onerror=()=>{URL.revokeObjectURL(url);rej(new Error(file.name+' 이미지를 열지 못했습니다'))};img.src=url})}
+
+const q=new URLSearchParams(location.search);
+const standalone=matchMedia('(display-mode: standalone)').matches||q.has('app');
+$('#open').href=EXEC;$('#back').href=EXEC;
+if('serviceWorker' in navigator)navigator.serviceWorker.register('sw.js');
+let deferred=null;
+addEventListener('beforeinstallprompt',e=>{e.preventDefault();deferred=e;$('#install').hidden=false});
+$('#install').onclick=async()=>{if(!deferred)return;deferred.prompt();const r=await deferred.userChoice;deferred=null;$('#install').hidden=true;if(r.outcome==='accepted')$('#hint').textContent='설치했습니다. 이제 홈 화면의 유비텍 아이콘으로 여세요.'};
+async function enc(obj){const s=new Blob([JSON.stringify(obj)]).stream().pipeThrough(new CompressionStream('deflate-raw'));
+  const u=new Uint8Array(await new Response(s).arrayBuffer());let b='';for(let i=0;i<u.length;i+=8192)b+=String.fromCharCode.apply(null,u.subarray(i,i+8192));
+  return btoa(b).replace(/\+/g,'-').replace(/\//g,'_').replace(/=+$/,'')}
+async function shared(){$('#home').hidden=true;$('#work').hidden=false;
+  try{const c=await caches.open('ubitec-share');const keys=await c.keys();const files=[];
+    for(const k of keys){const r=await c.match(k);const b=await r.blob();files.push(new File([b],'cap.jpg',{type:b.type||'image/jpeg'}))}
+    await Promise.all(keys.map(k=>c.delete(k)));
+    if(!files.length){$('#msg').innerHTML='<span class="warn">공유한 캡처를 찾지 못했습니다. 다시 공유해 주세요.</span>';$('#back').hidden=false;return}
+    const per=[];for(const f of files)per.push(await kkSlices(f));
+    const total=per.flat().reduce((t,p)=>t+1+(p.m?1:0),0);let n=0;const got=[];
+    const step=t=>{n++;$('#bar').style.width=Math.round(n/total*100)+'%';$('#msg').textContent=t+' '+n+' / '+total+' (한 장에 5~10초)'};
+    for(const slices of per){const g=[];
+      for(const p of slices){step('캡처 '+files.length+'장 읽는 중…');const o=await kkOcr(p.o);let m=null;
+        if(p.m){step('내 노란 말풍선 읽는 중…');m=(await kkOcr(p.m)).text||''}
+        g.push({o:o.text||'',m})}
+      got.push(g)}
+    $('#msg').textContent='다 읽었습니다. 작업일지를 엽니다…';
+    location.replace(EXEC+'?kk='+await enc({got}))}
+  catch(e){$('#msg').innerHTML='<span class="warn">읽지 못했습니다. '+String(e.message||e).replace(/</g,'&lt;')+'</span>';$('#back').hidden=false}}
+if(q.has('share'))shared();
+else if(standalone){location.replace(EXEC)}
+else{$('#hint').textContent='핸드폰에 설치해 두면 카톡 캡처를 공유 버튼으로 바로 보낼 수 있습니다.';$('#how').hidden=false}
+</script></body></html>
