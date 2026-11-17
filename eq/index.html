@@ -1,0 +1,152 @@
+<!doctype html><html lang="ko"><head><meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<title>유비텍 장비관리대장</title><meta name="theme-color" content="#13202b">
+<link rel="manifest" href="manifest.webmanifest"><link rel="icon" href="icon-192.png">
+<style>
+:root{--bg:#13202b;--card:#1b2a36;--card2:#21323f;--ink:#e8eef3;--muted:#9fb0bf;--go:#3fb68b;--acc:#58a6ff;--line:#2b3d4c;--warn:#e5a13a;--red:#e5534b}
+*{box-sizing:border-box}html,body{margin:0;background:var(--bg);color:var(--ink);font:15px/1.5 system-ui,-apple-system,'Malgun Gothic',sans-serif}
+button,input,select{font:inherit;color:inherit}
+.top{position:sticky;top:0;z-index:5;background:var(--bg);border-bottom:1px solid var(--line);padding:10px 14px 8px}
+.top h1{font-size:17px;margin:0;display:flex;align-items:center;gap:8px}.top h1 img{width:24px;height:24px;border-radius:6px}
+.top .sub{color:var(--muted);font-size:12px;margin-top:2px}
+.bar{display:flex;gap:6px;margin-top:8px}.bar input,.bar select{flex:1;min-width:0;padding:10px 12px;border-radius:10px;border:1px solid var(--line);background:var(--card);outline:none}
+.bar input:focus{border-color:var(--go)}
+.btn{padding:10px 14px;border-radius:10px;border:1px solid var(--line);background:var(--card);font-weight:700;cursor:pointer;white-space:nowrap}
+.btn.go{background:var(--go);border-color:var(--go);color:#0d1720}.btn.sm{padding:5px 10px;font-size:13px;font-weight:600}
+.tabs{display:flex;gap:6px;margin-top:8px;overflow-x:auto}.tabs button{padding:6px 12px;border-radius:999px;border:1px solid var(--line);background:none;color:var(--muted);font-size:13px;white-space:nowrap}
+.tabs button.on{background:var(--go);border-color:var(--go);color:#0d1720;font-weight:700}
+main{padding:10px 12px 40px;max-width:900px;margin:0 auto}
+.grp{margin:14px 0 6px;font-weight:800;font-size:15px;display:flex;justify-content:space-between;align-items:baseline}.grp small{color:var(--muted);font-weight:500}
+.site{color:var(--muted);font-size:13px;margin:8px 2px 4px}
+.eq{background:var(--card);border:1px solid var(--line);border-radius:12px;margin:0 0 8px;overflow:hidden}
+.eq>summary{list-style:none;padding:10px 12px;cursor:pointer;display:grid;grid-template-columns:1fr auto;gap:2px 8px}
+.eq>summary::-webkit-details-marker{display:none}
+.eq .t1{font-weight:700}.eq .t2{color:var(--muted);font-size:13px;overflow-wrap:anywhere}.eq .ip{font-family:ui-monospace,Consolas,monospace;color:var(--acc);font-size:13px;text-align:right}
+.eq .cat{display:inline-block;font-size:12px;padding:0 7px;border-radius:6px;background:var(--card2);color:var(--muted);margin-right:6px;font-weight:600}
+.eq.rm{opacity:.55}.eq.rm .t1::after{content:' · 철거';color:var(--red);font-size:12px}
+.det{border-top:1px solid var(--line);padding:6px 12px 10px}
+.row{display:grid;grid-template-columns:96px 1fr auto;gap:8px;padding:6px 0;border-bottom:1px dashed rgba(127,127,127,.18);align-items:start}
+.row:last-child{border-bottom:0}.row .k{color:var(--muted);font-size:13px}.row .v{white-space:pre-wrap;overflow-wrap:anywhere}
+.mono{font-family:ui-monospace,Consolas,monospace;font-size:13.5px}
+.cp{border:1px solid var(--line);background:var(--card2);border-radius:8px;padding:2px 8px;font-size:12px;cursor:pointer}
+.row.full{grid-template-columns:1fr}.ifs{width:100%;border-collapse:collapse;font-size:13px;margin-top:4px}.ifs td{padding:5px 4px;border-bottom:1px solid var(--line);vertical-align:middle}.ifs td:first-child,.ifs td:last-child{white-space:nowrap;width:1%}.cp{white-space:nowrap}.ifs .m{color:var(--go);font-weight:700}
+.ct{background:var(--card);border:1px solid var(--line);border-radius:12px;padding:10px 12px;margin:0 0 8px}
+.ct a{color:var(--acc);text-decoration:none}
+.lock{max-width:420px;margin:8vh auto 0;padding:0 16px;text-align:center}.lock img{width:72px;height:72px;border-radius:18px}
+.lock h2{margin:12px 0 4px}.lock p{color:var(--muted);margin:4px 0 14px}
+.lock .f{display:flex;flex-direction:column;gap:10px;text-align:left}
+.lock input[type=password],.lock input[type=text],.lock select{width:100%;padding:13px 14px;border-radius:12px;border:1px solid var(--line);background:var(--card);font-size:16px}
+.lock label.c{display:flex;gap:8px;align-items:center;color:var(--muted)}
+.msg{min-height:20px;color:var(--muted);font-size:14px}.warn{color:var(--warn)}
+.empty{color:var(--muted);text-align:center;padding:30px 10px}
+.toast{position:fixed;left:50%;bottom:24px;transform:translateX(-50%);background:#0d1720;border:1px solid var(--line);padding:8px 14px;border-radius:10px;font-size:14px;opacity:0;transition:opacity .2s;pointer-events:none}
+.toast.on{opacity:1}
+[hidden]{display:none!important}
+</style></head><body>
+<div id="lockv" class="lock">
+  <img src="icon-192.png" alt="">
+  <h2>장비관리대장</h2>
+  <p>PC 프로그램이 올려 둔 장비대장(DB)을 불러옵니다.<br>폰 보기 비밀번호를 넣으세요.</p>
+  <div class="f">
+    <select id="slot" hidden></select>
+    <input id="pw" type="password" placeholder="폰 보기 비밀번호" autocomplete="current-password">
+    <label class="c"><input type="checkbox" id="remember" checked> 이 폰에서 비밀번호 기억</label>
+    <button class="btn go" id="openBtn">DB 불러오기</button>
+    <div class="msg" id="lmsg"></div>
+  </div>
+</div>
+<div id="appv" hidden>
+  <div class="top">
+    <h1><img src="icon-192.png" alt="">장비관리대장 <span style="flex:1"></span><button class="btn sm" id="reload">새로 불러오기</button><button class="btn sm" id="lockBtn">잠그기</button></h1>
+    <div class="sub" id="sub"></div>
+    <div class="bar"><input id="q" type="search" placeholder="검색: 고객사·모델·IP·용도·S/N·위치…"></div>
+    <div class="bar"><select id="cus"><option value="">전체 고객사</option></select></div>
+    <div class="tabs" id="tabs"><button data-t="eq" class="on">장비</button><button data-t="ct">고객 연락처</button><button data-t="rm">철거 포함</button></div>
+  </div>
+  <main id="main"></main>
+</div>
+<div class="toast" id="toast"></div>
+<script>
+const API='https://script.google.com/macros/s/AKfycbwIyh8fc8UFFGorjBpWKkf1fHRuRlDY9EkM1oqlEhoQPC6EAtohbijVk3l_bOO_oFHQTg/exec',KEY='B_XVIYl9b6eFe_-XGz53WGfUufnzqSxi';const $=s=>document.querySelector(s);
+const esc=s=>String(s==null?'':s).replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+const ls={get:k=>{try{return localStorage.getItem(k)}catch(e){return null}},set:(k,v)=>{try{localStorage.setItem(k,v)}catch(e){}},del:k=>{try{localStorage.removeItem(k)}catch(e){}}};
+function toast(t){const e=$('#toast');e.textContent=t;e.classList.add('on');clearTimeout(toast.t);toast.t=setTimeout(()=>e.classList.remove('on'),1600)}
+if('serviceWorker' in navigator)navigator.serviceWorker.register('../sw.js',{scope:'../'}).catch(()=>{});
+// ---- 암호 풀기 (PC 프로그램과 같은 방식: PBKDF2-SHA256 → AES-GCM) ----
+const enc8=new TextEncoder(),dec8=new TextDecoder();
+function ub64(s){const b=atob(s);const u=new Uint8Array(b.length);for(let i=0;i<b.length;i++)u[i]=b.charCodeAt(i);return u}
+async function kdf(pw,salt,iter){const k=await crypto.subtle.importKey('raw',enc8.encode(pw),'PBKDF2',false,['deriveKey']);return crypto.subtle.deriveKey({name:'PBKDF2',salt,iterations:iter,hash:'SHA-256'},k,{name:'AES-GCM',length:256},false,['decrypt'])}
+async function decrypt(o,pw){return JSON.parse(dec8.decode(await crypto.subtle.decrypt({name:'AES-GCM',iv:ub64(o.iv)},await kdf(pw,ub64(o.salt),o.iter||250000),ub64(o.data))))}
+// ---- 잠긴 DB 보관 (이 폰 안, 잠긴 채로) ----
+function idb(){return new Promise((res,rej)=>{const r=indexedDB.open('ubitec-eq',1);r.onupgradeneeded=()=>r.result.createObjectStore('kv');r.onsuccess=()=>res(r.result);r.onerror=()=>rej(r.error)})}
+async function kvGet(k){try{const d=await idb();return await new Promise(r=>{const q=d.transaction('kv').objectStore('kv').get(k);q.onsuccess=()=>r(q.result);q.onerror=()=>r(null)})}catch(e){return null}}
+async function kvSet(k,v){try{const d=await idb();await new Promise(r=>{const t=d.transaction('kv','readwrite');t.objectStore('kv').put(v,k);t.oncomplete=r;t.onerror=r})}catch(e){}}
+async function call(body){const r=await fetch(API,{method:'POST',body:JSON.stringify(Object.assign({key:KEY},body))});const o=await r.json();if(!o.ok)throw new Error(o.error||'불러오지 못했습니다');return o}
+let DB=null,TAB='eq',SLOT=ls.get('ubitec.eq.slot')||'';
+async function loadSlots(){try{const o=await call({action:'eq_list'});const sl=(o.slots||[]).filter(x=>x.slot!=='test'||SLOT==='test');
+    const sel=$('#slot');sel.innerHTML=sl.map(x=>'<option value="'+esc(x.slot)+'">'+esc(x.slot)+' PC · '+esc(fmt(x.at))+'</option>').join('');
+    if(!sl.length){$('#lmsg').innerHTML='<span class="warn">아직 올라온 DB가 없습니다. PC 프로그램 [설정] → [폰에서 보기]를 켜 주세요.</span>';return}
+    if(!SLOT||!sl.some(x=>x.slot===SLOT))SLOT=sl[0].slot;sel.value=SLOT;sel.hidden=sl.length<2}catch(e){$('#lmsg').innerHTML='<span class="warn">인터넷 연결을 확인하세요. '+esc(e.message)+'</span>'}}
+function fmt(t){if(!t)return '';const d=new Date(t);if(isNaN(d))return t;const p=n=>String(n).padStart(2,'0');return d.getFullYear()+'-'+p(d.getMonth()+1)+'-'+p(d.getDate())+' '+p(d.getHours())+':'+p(d.getMinutes())}
+async function openDb(pw,fromNet){const m=$('#lmsg');
+  try{let blob=null,meta=null;
+    if(fromNet!==false){m.textContent='DB 받는 중…';try{const o=await call({action:'eq_get',slot:SLOT});blob=o.data;meta=o.meta;await kvSet('blob:'+SLOT,{data:blob,meta})}catch(e){const c=await kvGet('blob:'+SLOT);if(!c)throw e;blob=c.data;meta=c.meta;toast('인터넷이 안 돼서 이 폰에 있던 DB로 엽니다')}}
+    else{const c=await kvGet('blob:'+SLOT);if(!c)return openDb(pw,true);blob=c.data;meta=c.meta}
+    m.textContent='여는 중…';
+    let d;try{d=await decrypt(JSON.parse(blob),pw)}catch(e){throw new Error('비밀번호가 맞지 않습니다')}
+    DB=d;DB.meta=meta||{};ls.set('ubitec.eq.slot',SLOT);
+    if($('#remember').checked)ls.set('ubitec.eq.pw',pw);else ls.del('ubitec.eq.pw');
+    m.textContent='';showApp();return true}
+  catch(e){m.innerHTML='<span class="warn">'+esc(e.message||e)+'</span>';$('#lockv').hidden=false;$('#appv').hidden=true;return false}}
+// ---- 화면 ----
+const F=[['category','구분'],['model','Model'],['purpose','시스템 용도'],['hostname','Hostname'],['__ifs','IP정보'],['gateway_info','게이트웨이'],['access_url','접속 URL',1],['cli_access','CLI 접속',1],['port_info','Port정보'],['account','계정',1],['connection_method','접속방법'],['serial_no','S/N',1],['mac','MAC',1],['location','위치'],['os_info','OS(펌웨어)'],['introduced_year','도입연도'],['engineer','담당 엔지니어'],['sales','담당 영업'],['customer_contact','고객 담당자'],['backup_info','백업'],['note1','비고1'],['note2','비고2'],['no_text','No']];
+function ifs(e){try{const x=typeof e.interfaces==='string'?JSON.parse(e.interfaces||'[]'):(e.interfaces||[]);return Array.isArray(x)?x:[]}catch(_){return []}}
+function mainIp(e){const x=ifs(e);const m=x.find(i=>i.main&&(i.ip||'').trim())||x.find(i=>(i.ip||'').trim());return m?m.ip.trim():''}
+function disp(c){return c?(c.detail?c.base+'('+c.detail+')':c.base):''}
+function showApp(){$('#lockv').hidden=true;$('#appv').hidden=false;
+  const cs=DB.customers.filter(c=>c.enabled!==0&&c.enabled!==false);const bases=[...new Set(cs.map(c=>c.base))].sort((a,b)=>a.localeCompare(b,'ko'));
+  $('#cus').innerHTML='<option value="">전체 고객사 ('+bases.length+')</option>'+bases.map(b=>'<option>'+esc(b)+'</option>').join('');
+  $('#cus').value=ls.get('ubitec.eq.cus')||'';if($('#cus').selectedIndex<0)$('#cus').value='';
+  $('#sub').textContent=(DB.by||DB.meta.slot||'')+' PC에서 '+fmt(DB.meta.at||DB.at)+'에 올린 DB · 장비 '+DB.equipment.filter(e=>!e.removed).length+'대 · 보기 전용';
+  render()}
+function hay(e,c){return [disp(c),e.category,e.model,e.purpose,e.hostname,e.serial_no,e.mac,e.location,e.os_info,e.engineer,e.sales,e.customer_contact,e.note1,e.note2,e.access_url,e.cli_access,e.gateway_info,ifs(e).map(i=>i.ip+' '+(i.desc||'')).join(' ')].join(' ').toLowerCase()}
+function render(){const q=$('#q').value.trim().toLowerCase().split(/\s+/).filter(Boolean),cb=$('#cus').value;const M=$('#main');
+  const cm=new Map(DB.customers.map(c=>[c.id,c]));
+  if(TAB==='ct'){const list=DB.contacts.filter(k=>{const c=cm.get(k.customer_id);if(cb&&(!c||c.base!==cb))return false;const h=[disp(c),k.name,k.title,k.phone,k.email,k.memo].join(' ').toLowerCase();return q.every(w=>h.includes(w))});
+    M.innerHTML=list.length?list.sort((a,b)=>disp(cm.get(a.customer_id)).localeCompare(disp(cm.get(b.customer_id)),'ko')).map(k=>'<div class="ct"><b>'+esc(k.name)+'</b> '+esc(k.title||'')+'<div class="t2" style="color:var(--muted);font-size:13px">'+esc(disp(cm.get(k.customer_id)))+'</div>'+
+      (k.phone?'<div>📞 <a href="tel:'+esc(k.phone.replace(/[^0-9+]/g,''))+'">'+esc(k.phone)+'</a></div>':'')+(k.email?'<div>✉️ <a href="mailto:'+esc(k.email)+'">'+esc(k.email)+'</a></div>':'')+(k.memo?'<div class="t2" style="white-space:pre-wrap">'+esc(k.memo)+'</div>':'')+'</div>').join(''):'<div class="empty">고객 연락처가 없습니다</div>';return}
+  const showRm=TAB==='rm';
+  const eqs=DB.equipment.filter(e=>{const c=cm.get(e.customer_id);if(!showRm&&e.removed)return false;if(cb&&(!c||c.base!==cb))return false;if(!q.length)return true;const h=hay(e,c);return q.every(w=>h.includes(w))});
+  if(!eqs.length){M.innerHTML='<div class="empty">찾는 장비가 없습니다</div>';return}
+  const by=new Map();eqs.forEach(e=>{const c=cm.get(e.customer_id)||{base:'(고객사 없음)',detail:''};const k=c.base;if(!by.has(k))by.set(k,new Map());const s=by.get(k);const d=c.detail||'';if(!s.has(d))s.set(d,[]);s.get(d).push(e)});
+  const many=eqs.length>60&&!q.length&&!cb;
+  M.innerHTML=[...by.keys()].sort((a,b)=>a.localeCompare(b,'ko')).map(b=>{const s=by.get(b);const n=[...s.values()].reduce((t,x)=>t+x.length,0);
+    return '<div class="grp">'+esc(b)+'<small>'+n+'대</small></div>'+[...s.keys()].sort((a,b)=>a.localeCompare(b,'ko')).map(d=>(d?'<div class="site">'+esc(d)+'</div>':'')+s.get(d).sort((x,y)=>String(x.no_text||'').localeCompare(String(y.no_text||''),'ko',{numeric:true})).map(card).join('')).join('')}).join('')+
+    (many?'<div class="empty">고객사를 고르거나 검색하면 더 빨리 찾을 수 있습니다</div>':'')}
+function card(e){const ip=mainIp(e);
+  return '<details class="eq'+(e.removed?' rm':'')+'" data-id="'+esc(e.id)+'"><summary><div class="t1"><span class="cat">'+esc(e.category||'장비')+'</span>'+esc(e.model||'(모델 없음)')+'</div><div class="ip">'+esc(ip)+'</div>'+
+    '<div class="t2">'+esc([e.purpose,e.hostname,e.location].filter(Boolean).join(' · '))+'</div><div></div></summary><div class="det"></div></details>'}
+function detail(e){return F.map(([k,l,copy])=>{
+    if(k==='__ifs'){const x=ifs(e).filter(i=>(i.ip||'').trim()||(i.port||'').trim());if(!x.length)return '';
+      return '<div class="row full"><div class="k">'+l+' <span style="font-size:12px">(초록 = 대표 IP)</span></div><table class="ifs">'+x.map(i=>'<tr><td>'+esc(i.port||'')+'</td><td class="mono'+(i.main?' m':'')+'">'+esc(i.ip||'')+'<div style="color:var(--muted);font-family:inherit;font-size:12px">'+esc(i.desc||'')+'</div></td><td>'+((i.ip||'').trim()?'<button class="cp" data-cp="'+esc((i.ip||'').split('/')[0].trim())+'">복사</button>':'')+'</td></tr>').join('')+'</table></div>'}
+    const v=e[k];if(v==null||String(v).trim()==='')return '';
+    const isMono=/url|cli|account|serial|mac|gateway|port_info/.test(k);
+    return '<div class="row"><div class="k">'+l+'</div><div class="v'+(isMono?' mono':'')+'">'+linkify(String(v),k)+'</div><div>'+(copy||isMono?'<button class="cp" data-cp="'+esc(String(v).trim())+'">복사</button>':'')+'</div></div>'}).join('')+
+  backups(e)}
+function linkify(v,k){const t=esc(v);return k==='access_url'?t.replace(/(https?:\/\/[^\s<]+)/g,'<a href="$1" target="_blank" rel="noopener" style="color:var(--acc)">$1</a>'):t}
+function backups(e){const b=(DB.device_backups||[]).filter(x=>x.equipment_id===e.id);return b.length?'<div class="row"><div class="k">백업 파일</div><div class="v">'+b.map(x=>esc(x.file_name)+' <span style="color:var(--muted)">('+esc(x.updated_at||'').slice(0,10)+')</span>').join('<br>')+'<div style="color:var(--muted);font-size:12px">파일 내용은 PC에서 받습니다</div></div><div></div></div>':''}
+document.addEventListener('toggle',e=>{const d=e.target;if(!d.classList||!d.classList.contains('eq')||!d.open)return;const box=d.querySelector('.det');if(box.innerHTML)return;const eq=DB.equipment.find(x=>x.id===d.dataset.id);box.innerHTML=eq?detail(eq):''},true);
+document.addEventListener('click',async e=>{const b=e.target.closest('[data-cp]');if(!b)return;e.preventDefault();const t=b.dataset.cp;
+  try{await navigator.clipboard.writeText(t);toast('복사했습니다')}catch(_){const a=document.createElement('textarea');a.value=t;document.body.appendChild(a);a.select();document.execCommand('copy');a.remove();toast('복사했습니다')}});
+$('#q').addEventListener('input',()=>{clearTimeout(render.t);render.t=setTimeout(render,150)});
+$('#cus').onchange=()=>{ls.set('ubitec.eq.cus',$('#cus').value);render()};
+$('#tabs').onclick=e=>{const b=e.target.closest('button');if(!b)return;TAB=b.dataset.t;[...$('#tabs').children].forEach(x=>x.classList.toggle('on',x===b));render()};
+$('#slot').onchange=()=>{SLOT=$('#slot').value};
+$('#openBtn').onclick=()=>{const pw=$('#pw').value;if(!pw){$('#lmsg').innerHTML='<span class="warn">비밀번호를 넣으세요</span>';return}openDb(pw,true)};
+$('#pw').addEventListener('keydown',e=>{if(e.key==='Enter')$('#openBtn').click()});
+$('#lockBtn').onclick=()=>{DB=null;ls.del('ubitec.eq.pw');$('#pw').value='';$('#appv').hidden=true;$('#lockv').hidden=false;$('#main').innerHTML='';loadSlots()};
+$('#reload').onclick=async()=>{const pw=ls.get('ubitec.eq.pw')||$('#pw').value;if(!pw){$('#lockBtn').click();return}$('#reload').disabled=true;$('#reload').textContent='받는 중…';
+  if(await openDb(pw,true))toast('최신 DB를 불러왔습니다');$('#reload').disabled=false;$('#reload').textContent='새로 불러오기'};
+(async()=>{const q=new URLSearchParams(location.search);if(q.get('slot'))SLOT=q.get('slot');
+  await loadSlots();const pw=ls.get('ubitec.eq.pw');if(pw){$('#pw').value=pw;openDb(pw,true)}else $('#pw').focus()})();
+</script></body></html>

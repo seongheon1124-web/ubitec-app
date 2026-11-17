@@ -1,0 +1,29 @@
+{
+ "id": "ubitec-eq",
+ "name": "유비텍 장비관리대장",
+ "short_name": "유비텍 장비",
+ "lang": "ko",
+ "start_url": "./",
+ "scope": "./",
+ "display": "standalone",
+ "background_color": "#13202b",
+ "theme_color": "#13202b",
+ "icons": [
+  {
+   "src": "icon-192.png",
+   "sizes": "192x192",
+   "type": "image/png"
+  },
+  {
+   "src": "icon-512.png",
+   "sizes": "512x512",
+   "type": "image/png"
+  },
+  {
+   "src": "icon-mask.png",
+   "sizes": "512x512",
+   "type": "image/png",
+   "purpose": "maskable"
+  }
+ ]
+}
